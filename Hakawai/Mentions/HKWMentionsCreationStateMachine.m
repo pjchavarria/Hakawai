@@ -247,7 +247,7 @@ typedef NS_ENUM(NSInteger, HKWMentionsCreationAction) {
     BOOL bufferAlreadyEmpty = ([self.stringBuffer length] == 0
                                || (self.searchType == HKWMentionsSearchTypeImplicit
                                    && [self.stringBuffer length] == 1));
-    
+
     // The range of the buffer string that corresponds to the delete string (if the delete string is valid)
     NSRange toDeleteRange = NSMakeRange([self.stringBuffer length] - [deleteString length], [deleteString length]);
 
@@ -791,12 +791,9 @@ typedef NS_ENUM(NSInteger, HKWMentionsCreationAction) {
     self.chooserState = HKWMentionsCreationChooserStateHidden;
 
     // However, there are two conditions under which mentions creation should actually end completely:
-    // 1. The user's initial query turned up no results
-    // 2. There are no results because the last character the user typed was a whitespace or newline (whether or not
-    //    the previous request resulted in results or not)
-    BOOL shouldStop = (self.resultsState == HKWMentionsCreationResultsStateAwaitingFirstResult
-                       || previousAction == HKWMentionsCreationActionWhitespaceCharacterInserted);
-    if (shouldStop) {
+    // There are no results because the last character the user typed was a whitespace or newline
+    // (whether or not the previous request resulted in results or not)
+    if (previousAction == HKWMentionsCreationActionWhitespaceCharacterInserted) {
         [self.delegate cancelMentionFromStartingLocation:self.startingLocation];
         self.state = HKWMentionsCreationStateQuiescent;
         return;
@@ -804,8 +801,9 @@ typedef NS_ENUM(NSInteger, HKWMentionsCreationAction) {
 
     // Advance the results state. The user could have been in one of two states formally: results existed, or there were
     //  no results but the user hadn't typed a whitespace character since results stopped coming back
-    NSAssert(self.resultsState == HKWMentionsCreationResultsStateCreatingMentionWithResults
-             || self.resultsState == HKWMentionsCreationResultsStateNoResultsWithoutWhitespace,
+    NSAssert(self.resultsState == HKWMentionsCreationResultsStateCreatingMentionWithResults ||
+             self.resultsState == HKWMentionsCreationResultsStateNoResultsWithoutWhitespace ||
+             self.resultsState == HKWMentionsCreationResultsStateAwaitingFirstResult,
              @"Logic error in dataReturnedForResults:...; resultsState is inconsistent. Got %@, which is invalid.",
              nameForResultsState(self.resultsState));
     self.resultsState = HKWMentionsCreationResultsStateNoResultsWithoutWhitespace;
